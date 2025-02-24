@@ -29,25 +29,25 @@ jobs:
           python3 -m venv venv
           . venv/bin/activate
           pip install --upgrade pip
-          pip install -r requirements.txt
+          pip install -r src/requirements.txt  # Spécifier le chemin vers requirements.txt
 
       # 4. Préparer les données
       - name: Prepare data
         run: |
           . venv/bin/activate
-          python main.py --train_path churn-bigml-80.csv --test_path churn-bigml-20.csv
+          python src/main.py --train_path src/churn-bigml-80.csv --test_path src/churn-bigml-20.csv  # Spécifier le chemin vers main.py et les datasets
 
       # 5. Entraîner le modèle
       - name: Train model
         run: |
           . venv/bin/activate
-          python main.py --train --train_path churn-bigml-80.csv --test_path churn-bigml-20.csv
+          python src/main.py --train --train_path src/churn-bigml-80.csv --test_path src/churn-bigml-20.csv
 
       # 6. Évaluer le modèle
       - name: Evaluate model
         run: |
           . venv/bin/activate
-          python main.py --evaluate --train_path churn-bigml-80.csv --test_path churn-bigml-20.csv
+          python src/main.py --evaluate --train_path src/churn-bigml-80.csv --test_path src/churn-bigml-20.csv
 
 
 
@@ -88,14 +88,5 @@ jobs:
         run: |
           python3 -m venv venv
           . venv/bin/activate
-          mlflow server --backend-store-uri sqlite:///mlflow.db --default-artifact-root ./mlruns --host 0.0.0.0 --port 5000
-
-  monitoring:
-    runs-on: ubuntu-latest
-
-    steps:
-      # Démarrer Elasticsearch et Kibana avec Docker Compose
-      - name: Start Elasticsearch and Kibana
-        run: |
-          docker-compose up -d
+          mlflow server --backend-store-uri sqlite:///mlflow.db --default-artifact-root ./mlruns --host 0.0.0.0 --
 

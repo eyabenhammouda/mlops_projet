@@ -29,7 +29,7 @@ jobs:
           python3 -m venv venv
           . venv/bin/activate
           pip install --upgrade pip
-          pip install -r src/requirements.txt  # Spécifier le chemin vers requirements.txt
+          pip install -r requirements.txt  # Spécifier le chemin vers requirements.txt
 
       # 4. Préparer les données
       - name: Prepare data

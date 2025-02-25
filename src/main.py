@@ -3,7 +3,7 @@ import logging
 import mlflow
 import mlflow.sklearn
 from mlflow.tracking import MlflowClient
-from elasticsearch import Elasticsearch
+
 from model_pipeline import prepare_data, train_model, evaluate_model, save_model, load_model
 
         

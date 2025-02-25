@@ -1,0 +1,15 @@
+artifact_uri: mlflow-artifacts:/649993525513719275/c101e3ec902f4601900345867ae60e8f/artifacts
+end_time: 1740447998384
+entry_point_name: ''
+experiment_id: '649993525513719275'
+lifecycle_stage: active
+run_id: c101e3ec902f4601900345867ae60e8f
+run_name: popular-frog-180
+run_uuid: c101e3ec902f4601900345867ae60e8f
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1740447995485
+status: 3
+tags: []
+user_id: eya

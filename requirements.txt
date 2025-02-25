@@ -7,4 +7,5 @@ mlflow
 fastapi
 uvicorn
 joblib
+elasticsearch==7.10.0  # Spécifie la version compatible avec ton code
  

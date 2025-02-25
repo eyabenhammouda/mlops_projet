@@ -31,6 +31,35 @@ jobs:
           pip install --upgrade pip
           pip install -r requirements.txt  # Assurez-vous que `mlflow` est dans requirements.txt
 
+  mlflow:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      # 2. Créer l'environnement virtuel et installer MLflow et autres dépendances
+      - name: Set up Python environment for MLflow
+        run: |
+          python3 -m venv venv
+          . venv/bin/activate
+          pip install --upgrade pip
+          pip install mlflow  # Assurez-vous d'installer mlflow
+          pip install -r requirements.txt  # Installer les autres dépendances nécessaires
+
+      # 3. Démarrer le serveur MLflow
+      - name: Start MLflow Server
+        run: |
+          . venv/bin/activate  # Activation de l'environnement virtuel
+          mlflow ui --host 0.0.0.0 --port 5000 & 
+          echo "Attente que le serveur MLflow soit prêt..."
+          # Attendre que le serveur MLflow soit prêt avant de continuer
+          while ! curl -s http://127.0.0.1:5000; do
+            echo "Serveur MLflow pas encore prêt, réessayer dans 5 secondes..."
+            sleep 5
+          done
+          echo "Serveur MLflow est prêt"
+
       # 4. Préparer les données
       - name: Prepare data
         run: |
@@ -74,25 +103,4 @@ jobs:
           docker build -t ${{ secrets.DOCKER_USERNAME }}/eya_ben_hammouda_4ds4 .
           docker tag eya_ben_hammouda_4ds4 ${{ secrets.DOCKER_USERNAME }}/eya_ben_hammouda_4ds4
           docker push ${{ secrets.DOCKER_USERNAME }}/eya_ben_hammouda_4ds4
-
-  mlflow:
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
-
-      - name: Set up Python environment for MLflow
-        run: |
-          python3 -m venv venv
-          . venv/bin/activate
-          pip install --upgrade pip
-          pip install mlflow  # Assurez-vous d'installer mlflow
-          pip install -r requirements.txt  # Installer les autres dépendances nécessaires
-
-      - name: Start MLflow Server
-        run: |
-          . venv/bin/activate  # Activation de l'environnement virtuel
-          mlflow server --backend-store-uri sqlite:///mlflow.db --default-artifact-root ./mlruns --host 0.0.0.0 --port 5000 &
-          sleep 10  # Attendre que le serveur démarre
 

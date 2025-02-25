@@ -5,20 +5,7 @@ import mlflow.sklearn
 from mlflow.tracking import MlflowClient
 from elasticsearch import Elasticsearch
 from model_pipeline import prepare_data, train_model, evaluate_model, save_model, load_model
-# 🔗 Connexion à Elasticsearch
-def connect_to_elasticsearch():
-    """Établit une connexion à Elasticsearch"""
-    try:
-        es = Elasticsearch("http://172.18.0.2:9200", verify_certs=False) 
-        if es.ping():
-            print("✅ Connexion réussie à Elasticsearch")
-            return es
-        else:
-            print("❌ Impossible de se connecter à Elasticsearch")
-            return None
-    except Exception as e:   
-        print(f"⚠️ Erreur de connexion à Elasticsearch : {e}")
-        return None
+
         
 
 # Configuration du logging
@@ -26,26 +13,7 @@ logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(
 mlflow.set_tracking_uri("http://127.0.0.1:5000")  # URI de suivi MLflow
 mlflow.set_experiment("Churn Prediction")  # Nom de l'expérience MLflow
 MODEL_NAME = "Churn_Prediction_Model"  # Nom du modèle dans le Model Registry
-# 📡 Envoi des logs à Elasticsearch
-def log_to_elasticsearch(run_id, stage, metrics, params):
-    """Envoie les logs MLflow à Elasticsearch"""
-    es = connect_to_elasticsearch()
-    if es is None:
-        print("🚨 Elasticsearch non disponible, logs non envoyés.")
-        return
 
-    log_data = {
-        "run_id": run_id,
-        "stage": stage,
-        "metrics": metrics,
-        "params": params
-    }
-
-    try:
-        es.index(index="mlflow-metriques", body=log_data)  # Correction du Content-Type automatique
-        print(f"📡 Logs envoyés à Elasticsearch : {log_data}")
-    except Exception as e:
-        print(f"⚠️ Échec de l'envoi des logs à Elasticsearch : {e}")
 
 
 def list_model_versions():
@@ -132,13 +100,7 @@ def main():
         mlflow.log_metric("precision", precision)
         mlflow.log_metric("recall", recall)
         mlflow.log_metric("f1_score", f1)
-        # 📡 Envoi des logs à Elasticsearch
-        log_to_elasticsearch(
-            run.info.run_id,
-            args.stage,
-            {"accuracy": accuracy, "precision": precision, "recall": recall, "f1_score": f1},
-            {"n_estimators": 100, "max_depth":1 }
-        )
+
 
         # Promotion du modèle au stage spécifié par l'utilisateur
         if args.stage:

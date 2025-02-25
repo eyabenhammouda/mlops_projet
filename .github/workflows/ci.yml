@@ -29,24 +29,24 @@ jobs:
           python3 -m venv venv
           . venv/bin/activate
           pip install --upgrade pip
-          pip install -r requirements.txt  # Spécifier le chemin vers requirements.txt
+          pip install -r requirements.txt  # Assurez-vous que `mlflow` est dans requirements.txt
 
       # 4. Préparer les données
       - name: Prepare data
         run: |
-          source venv/bin/activate
+          . venv/bin/activate  # Activation de l'environnement virtuel
           python src/main.py --prepare --train_path data/churn-bigml-80.csv --test_path data/churn-bigml-20.csv
 
       # 5. Entraîner le modèle
       - name: Train model
         run: |
-          . venv/bin/activate
+          . venv/bin/activate  # Activation de l'environnement virtuel
           python src/main.py --train --train_path data/churn-bigml-80.csv --test_path data/churn-bigml-20.csv
 
       # 6. Évaluer le modèle
       - name: Evaluate model
         run: |
-          . venv/bin/activate
+          . venv/bin/activate  # Activation de l'environnement virtuel
           python src/main.py --evaluate --train_path data/churn-bigml-80.csv --test_path data/churn-bigml-20.csv
 
   docker:
@@ -82,10 +82,17 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      - name: Start MLflow Server
+      - name: Set up Python environment for MLflow
         run: |
           python3 -m venv venv
           . venv/bin/activate
+          pip install --upgrade pip
+          pip install mlflow  # Assurez-vous d'installer mlflow
+          pip install -r requirements.txt  # Installer les autres dépendances nécessaires
+
+      - name: Start MLflow Server
+        run: |
+          . venv/bin/activate  # Activation de l'environnement virtuel
           mlflow server --backend-store-uri sqlite:///mlflow.db --default-artifact-root ./mlruns --host 0.0.0.0 --port 5000 &
           sleep 10  # Attendre que le serveur démarre
 

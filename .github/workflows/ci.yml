@@ -1,81 +1,67 @@
-name: CI/CD Pipeline
+name: CI Pipeline
 
 on:
   push:
     branches:
-      - master  # Le workflow s'exécute à chaque "push" sur la branche master
-  pull_request:
-    branches:
-      - master  # Le workflow s'exécute à chaque PR vers la branche master
+      - master
 
 jobs:
-  setup:
+  build:
     runs-on: ubuntu-latest
 
     steps:
-      # 1. Vérification du dépôt (Clone le code)
-      - name: Checkout code
-        uses: actions/checkout@v3
+    - name: Checkout repository
+      uses: actions/checkout@v2
 
-      # 2. Configuration de Python (choix de la version)
-      - name: Setup Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: 3.8
+    - name: Set up Python
+      uses: actions/setup-python@v2
+      with:
+        python-version: '3.8'
 
-      # 3. Créer l'environnement virtuel et installer les dépendances
-      - name: Install dependencies
-        run: |
-          python3 -m venv venv
-          . venv/bin/activate
-          pip install --upgrade pip
-          pip install -r requirements.txt  # Assurez-vous que mlflow est dans requirements.txt
+    - name: Install dependencies
+      run: |
+        python -m venv venv
+        source venv/bin/activate
+        pip install --upgrade pip
+        pip install -r requirements.txt
 
-  mlflow:
-    runs-on: ubuntu-latest
+    - name: Prepare data
+      run: |
+        source venv/bin/activate
+        python src/main.py --prepare --train_path data/churn-bigml-80.csv --test_path data/churn-bigml-20.csv
 
-    steps:
-      # 1. Vérification du dépôt
-      - name: Checkout code
-        uses: actions/checkout@v3
+    - name: Train and Save model
+      run: |
+        source venv/bin/activate
+        mkdir -p models  # Create the models directory if it doesn't exist
+        python src/main.py --train --train_path data/churn-bigml-80.csv --test_path data/churn-bigml-20.csv
+        python src/main.py --save models/best_model.pkl --train_path data/churn-bigml-80.csv --test_path data/churn-bigml-20.csv
 
-      # 2. Créer l'environnement virtuel et installer MLflow et autres dépendances
-      - name: Set up Python environment for MLflow
-        run: |
-          python3 -m venv venv
-          . venv/bin/activate
-          pip install --upgrade pip
-          pip install mlflow  # Assurez-vous d'installer mlflow
-          pip install -r requirements.txt  # Installer les autres dépendances nécessaires
+    - name: Check model directory and file
+      run: |
+        if [ -d "models" ]; then
+          echo "models directory exists"
+        else
+          echo "models directory does not exist"
+        fi
+        if [ -f "models/best_model.pkl" ]; then
+          echo "models/best_model.pkl exists"
+        else
+          echo "models/best_model.pkl does not exist"
+        fi
 
-      # 3. Démarrer le serveur MLflow
-      - name: Start MLflow Server
-        run: |
-          . venv/bin/activate  # Activation de l'environnement virtuel
-          mlflow ui --host 0.0.0.0 --port 5000 & 
-        continue-on-error: true  # Ignore errors since GitHub Actions doesn't have a UI
+    - name: Evaluate model
+      run: |
+        source venv/bin/activate
+        python src/main.py --evaluate --train_path data/churn-bigml-80.csv --test_path data/churn-bigml-20.csv --save models/best_model.pkl
 
-      # 4. Préparer les données
-      - name: Prepare data
-        run: |
-          . venv/bin/activate  # Activation de l'environnement virtuel
-          python src/main.py --prepare --train_path data/churn-bigml-80.csv --test_path data/churn-bigml-20.csv
+    - name: Archive model
+      uses: actions/upload-artifact@v4
+      with:
+        name: model-artifacts
+        path: models/best_model.pkl
 
-      # 5. Entraîner le modèle
-      - name: Train model
-        run: |
-          . venv/bin/activate  # Activation de l'environnement virtuel
-          python src/main.py --train --train_path data/churn-bigml-80.csv --test_path data/churn-bigml-20.csv
-
-      # 6. Évaluer le modèle
-      - name: Evaluate model
-        run: |
-          . venv/bin/activate  # Activation de l'environnement virtuel
-          python src/main.py --evaluate --train_path data/churn-bigml-80.csv --test_path data/churn-bigml-20.csv
-          
-      # 7. Sauvegarde et gestion des versions du modèle
-      - name: Save and manage model version
-        run: |
-          . venv/bin/activate
-          python src/main.py --save "churn_model" --train_path data/churn-bigml-80.csv --test_path data/churn-bigml-20.csv
-
+    - name: Start TensorBoard
+      run: |
+        source venv/bin/activate
+        nohup tensorboard --logdir logs/fit --host 0.0.0.0 --port 6006 &
